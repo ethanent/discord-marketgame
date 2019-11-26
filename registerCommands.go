@@ -14,8 +14,23 @@ func registerCommands() {
 			Content: "",
 			Embed: &discordgo.MessageEmbed{
 				Title:       "Help",
-				Description: "Welcome to MarketBot.\n\nCommands:\n\n!help",
-				Color:       0x3E606F,
+				Description: "Welcome to MarketGame. May the odds be in your favor.\n[Source](https://github.com/ethanent/discord-marketgame)",
+				Footer: &discordgo.MessageEmbedFooter{
+					Text: "(c) 2019 Ethan Davis",
+				},
+				Fields: []*discordgo.MessageEmbedField{
+					&discordgo.MessageEmbedField{
+						Name:   "Information Commands",
+						Value:  "\n!help\n!price <ticker>\n!bal\n!shares",
+						Inline: true,
+					},
+					&discordgo.MessageEmbedField{
+						Name:   "Activity Commands",
+						Value:  "\n!buy <ticker> <count>\n!reset",
+						Inline: true,
+					},
+				},
+				Color: 0x3E606F,
 			},
 		})
 
