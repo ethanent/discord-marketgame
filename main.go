@@ -29,6 +29,7 @@ func loadConfig() {
 	fmt.Println("Loading config from", configPath)
 
 	configFile, err := os.Open(configPath)
+	defer configFile.Close()
 
 	if err != nil {
 		panic(err)

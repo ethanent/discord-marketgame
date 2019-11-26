@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -10,7 +11,7 @@ import (
 
 // User data
 type User struct {
-	Mux     sync.Mutex
+	mux     sync.Mutex
 	ID      string          `json:"id"`
 	Balance float64         `json:"balance"`
 	Shares  map[string]uint `json:"shares"`
@@ -25,10 +26,12 @@ func getUserFilePath(id string) (*string, error) {
 		return nil, err
 	}
 
+	fmt.Println(userFilePath)
+
 	return &userFilePath, nil
 }
 
-func getUser(id string) (*User, error) {
+func GetUser(id string) (*User, error) {
 	memUser, ok := memUsers[id]
 
 	var user User
@@ -45,14 +48,19 @@ func getUser(id string) (*User, error) {
 
 	userFile, err := os.Open(*userFilePath)
 
+	defer userFile.Close()
+
 	if err != nil {
 		user = User{
-			Mux:     sync.Mutex{},
+			ID:      id,
+			mux:     sync.Mutex{},
 			Balance: 100000,
 			Shares:  map[string]uint{},
 		}
 
 		err := user.Save()
+
+		memUsers[id] = &user
 
 		if err != nil {
 			return &user, nil
@@ -68,7 +76,7 @@ func getUser(id string) (*User, error) {
 	}
 
 	user = User{
-		Mux: sync.Mutex{},
+		mux: sync.Mutex{},
 	}
 
 	err = json.Unmarshal(userFileContent, &user)
@@ -89,6 +97,7 @@ func (u *User) Save() error {
 	}
 
 	file, err := os.Create(*userFilePath)
+	defer file.Close()
 
 	if err != nil {
 		return err

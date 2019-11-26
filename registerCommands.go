@@ -38,7 +38,7 @@ func registerCommands() {
 	})
 
 	registerCommand("bal", func(s *discordgo.Session, m *discordgo.Message, args []string) error {
-		user, err := getUser(m.Author.ID)
+		user, err := GetUser(m.Author.ID)
 
 		if err != nil {
 			_, err = s.ChannelMessageSendComplex(m.ChannelID, &discordgo.MessageSend{
