@@ -6,14 +6,16 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
 )
 
 // User data
 type User struct {
-	mux     sync.Mutex
-	ID      string          `json:"id"`
-	Balance float64         `json:"balance"`
-	Shares  map[string]uint `json:"shares"`
+	mux       sync.Mutex
+	ID        string          `json:"id"`
+	Balance   float64         `json:"balance"`
+	Shares    map[string]uint `json:"shares"`
+	LastReset time.Time       `json:"lastReset"`
 }
 
 var memUsers map[string]*User = map[string]*User{}
@@ -49,10 +51,11 @@ func GetUser(id string) (*User, error) {
 
 	if err != nil {
 		user = User{
-			ID:      id,
-			mux:     sync.Mutex{},
-			Balance: 100000,
-			Shares:  map[string]uint{},
+			ID:        id,
+			mux:       sync.Mutex{},
+			Balance:   config["game"].(map[string]interface{})["startBalance"].(float64),
+			Shares:    map[string]uint{},
+			LastReset: time.Now(),
 		}
 
 		err := user.Save()

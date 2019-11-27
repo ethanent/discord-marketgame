@@ -1,4 +1,7 @@
 {
     "discordToken": "",
-    "alphaAPIKey": ""
+    "alphaAPIKey": "",
+    "game": {
+        "startBalance": 100000
+    }
 }
