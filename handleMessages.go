@@ -27,7 +27,7 @@ func handleMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
 		handler, ok := commandHandlers[args[0]]
 
 		if ok {
-			err := handler(s, &msg, args)
+			err := handler(s, &msg, args[1:])
 
 			if err != nil {
 				os.Stderr.WriteString(err.Error())

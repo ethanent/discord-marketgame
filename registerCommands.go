@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"strconv"
 	"strings"
 
@@ -41,15 +42,6 @@ func registerCommands() {
 		user, err := GetUser(m.Author.ID)
 
 		if err != nil {
-			_, err = s.ChannelMessageSendComplex(m.ChannelID, &discordgo.MessageSend{
-				Content: "",
-				Embed: &discordgo.MessageEmbed{
-					Title:       "ERROR",
-					Description: err.Error(),
-					Color:       0xFF0000,
-				},
-			})
-
 			return err
 		}
 
@@ -71,20 +63,15 @@ func registerCommands() {
 	})
 
 	registerCommand("price", func(s *discordgo.Session, m *discordgo.Message, args []string) error {
-		symbol := strings.ToUpper(args[1])
+		if len(args) < 1 {
+			return errors.New("Missing arguments.\nUsage: !price <symbol>")
+		}
+
+		symbol := strings.ToUpper(args[0])
 
 		tsvs, err := avClient.StockTimeSeries(av.TimeSeriesDaily, symbol)
 
 		if err != nil {
-			_, err = s.ChannelMessageSendComplex(m.ChannelID, &discordgo.MessageSend{
-				Content: "",
-				Embed: &discordgo.MessageEmbed{
-					Title:       "ERROR",
-					Description: err.Error(),
-					Color:       0xFF0000,
-				},
-			})
-
 			return err
 		}
 
@@ -113,5 +100,155 @@ func registerCommands() {
 		})
 
 		return err
+	})
+
+	registerCommand("buy", func(s *discordgo.Session, m *discordgo.Message, args []string) error {
+		if len(args) < 2 {
+			return errors.New("Missing arguments.\nUsage: !buy <count> <symbol>")
+		}
+
+		count, err := strconv.Atoi(args[0])
+		symbol := strings.ToUpper(args[1])
+
+		if err != nil {
+			return err
+		}
+
+		if count < 0 {
+			return errors.New("You can't buy negative shares.")
+		}
+
+		sharePx, err := getLivePrice(symbol)
+
+		if err != nil {
+			return err
+		}
+
+		u, err := GetUser(m.Author.ID)
+
+		if err != nil {
+			return err
+		}
+
+		totalPx := float64(count) * sharePx
+
+		if u.Balance-totalPx < 0 {
+			return errors.New("You can't afford to buy " + strconv.Itoa(count) + "x$" + symbol)
+		}
+
+		u.Balance -= totalPx
+
+		_, ok := u.Shares[symbol]
+
+		if ok {
+			u.Shares[symbol] += uint(count)
+		} else {
+			u.Shares[symbol] = uint(count)
+		}
+
+		err = u.Save()
+
+		if err != nil {
+			return err
+		}
+
+		_, err = s.ChannelMessageSendComplex(m.ChannelID, &discordgo.MessageSend{
+			Content: "",
+			Embed: &discordgo.MessageEmbed{
+				Title: strconv.Itoa(count) + "x$" + symbol + " Purchase Complete",
+				Fields: []*discordgo.MessageEmbedField{
+					&discordgo.MessageEmbedField{
+						Name:  "Buy price",
+						Value: usdFormatter.FormatMoney(sharePx),
+					},
+					&discordgo.MessageEmbedField{
+						Name:  "Total cost",
+						Value: usdFormatter.FormatMoney(totalPx),
+					},
+				},
+				Color: 0x3E606F,
+			},
+		})
+
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	registerCommand("sell", func(s *discordgo.Session, m *discordgo.Message, args []string) error {
+		if len(args) < 2 {
+			return errors.New("Missing arguments.\nUsage: !sell <count> <symbol>")
+		}
+
+		count, err := strconv.Atoi(args[0])
+		symbol := strings.ToUpper(args[1])
+
+		if err != nil {
+			return err
+		}
+
+		if count < 0 {
+			return errors.New("You can't sell negative shares.")
+		}
+
+		sharePx, err := getLivePrice(symbol)
+
+		if err != nil {
+			return err
+		}
+
+		u, err := GetUser(m.Author.ID)
+
+		if err != nil {
+			return err
+		}
+
+		totalPx := float64(count) * sharePx
+
+		u.Balance += totalPx
+
+		_, ok := u.Shares[symbol]
+
+		if ok {
+			if u.Shares[symbol] < uint(count) {
+				return errors.New("You do not own enough " + symbol + " to complete sale. You currently own " + strconv.Itoa(int(u.Shares[symbol])) + " " + symbol + ".")
+			}
+
+			u.Shares[symbol] -= uint(count)
+		} else {
+			return errors.New("You do not own any " + symbol + ".")
+		}
+
+		err = u.Save()
+
+		if err != nil {
+			return err
+		}
+
+		_, err = s.ChannelMessageSendComplex(m.ChannelID, &discordgo.MessageSend{
+			Content: "",
+			Embed: &discordgo.MessageEmbed{
+				Title: strconv.Itoa(count) + "x$" + symbol + " Purchase Complete",
+				Fields: []*discordgo.MessageEmbedField{
+					&discordgo.MessageEmbedField{
+						Name:  "Buy price",
+						Value: usdFormatter.FormatMoney(sharePx),
+					},
+					&discordgo.MessageEmbedField{
+						Name:  "Total cost",
+						Value: usdFormatter.FormatMoney(totalPx),
+					},
+				},
+				Color: 0x3E606F,
+			},
+		})
+
+		if err != nil {
+			return err
+		}
+
+		return nil
 	})
 }
