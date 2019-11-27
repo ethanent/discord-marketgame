@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -25,8 +24,6 @@ func getUserFilePath(id string) (*string, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Println(userFilePath)
 
 	return &userFilePath, nil
 }

@@ -52,6 +52,8 @@ func main() {
 	loadConfig()
 	registerCommands()
 
+	go autoPurgeLivePxCache()
+
 	avClient = av.NewClient(config["alphaAPIKey"].(string))
 
 	usdFormatter = accounting.Accounting{

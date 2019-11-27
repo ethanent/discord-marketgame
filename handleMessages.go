@@ -12,8 +12,14 @@ type CommandHandler func(*discordgo.Session, *discordgo.Message, []string) error
 
 var commandHandlers map[string]CommandHandler = map[string]CommandHandler{}
 
+var alternateCommands map[string]string = map[string]string{}
+
 func registerCommand(command string, h CommandHandler) {
 	commandHandlers[command] = h
+}
+
+func registerAlternate(from string, to string) {
+	alternateCommands[from] = to
 }
 
 func handleMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -24,7 +30,15 @@ func handleMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if len(contentChars) > 0 && string(contentChars[0]) == "!" {
 		args := strings.Split(string([]rune(msg.Content)[1:]), " ")
 
-		handler, ok := commandHandlers[args[0]]
+		lookupCommand := args[0]
+
+		alternateFor, ok := alternateCommands[args[0]]
+
+		if ok {
+			lookupCommand = alternateFor
+		}
+
+		handler, ok := commandHandlers[lookupCommand]
 
 		if ok {
 			err := handler(s, &msg, args[1:])
