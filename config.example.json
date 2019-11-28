@@ -1,6 +1,6 @@
 {
     "discordToken": "",
-    "alphaAPIKey": "",
+    "iexSecret": "",
     "game": {
         "startBalance": 100000
     }

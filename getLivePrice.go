@@ -1,58 +1,87 @@
 package main
 
 import (
+	"encoding/json"
+	"io/ioutil"
+	"net/http"
+	"strconv"
 	"time"
-
-	av "github.com/cmckee-dev/go-alpha-vantage"
 )
 
-type tsvl []*av.TimeSeriesValue
-
-var livePxCache map[string]tsvl = map[string]tsvl{}
-var lastCachePurge time.Time = time.Now()
+var livePxCache map[string]float64 = map[string]float64{}
 
 func autoPurgeLivePxCache() {
 	for {
-		time.Sleep(time.Minute * 3)
+		time.Sleep(time.Minute * 5)
 
-		livePxCache = map[string]tsvl{}
+		livePxCache = map[string]float64{}
 	}
 }
 
 func getLivePrice(symbol string) (float64, error) {
-	cachedTsv, ok := livePxCache[symbol]
+	cachedLast, ok := livePxCache[symbol]
 
 	if ok {
-		return (*cachedTsv[len(cachedTsv)-1]).Close, nil
+		return cachedLast, nil
 	}
 
-	tsvs, err := avClient.StockTimeSeries(av.TimeSeriesDaily, symbol)
+	resp, err := http.Get("https://cloud.iexapis.com/v1/stock/" + symbol + "/quote/iexRealtimePrice?token=" + config["iexToken"].(string))
 
 	if err != nil {
-		return 0, err
+		return -1, err
 	}
 
-	lastPx := (*tsvs[len(tsvs)-1]).Close
+	defer resp.Body.Close()
 
-	livePxCache[symbol] = tsvs
+	data, err := ioutil.ReadAll(resp.Body)
 
-	return lastPx, nil
+	if err != nil {
+		return -1, err
+	}
+
+	floatPx, err := strconv.ParseFloat(string(data), 64)
+
+	if err != nil {
+		return -1, err
+	}
+
+	livePxCache[symbol] = floatPx
+
+	return floatPx, nil
 }
 
 func getDayChange(symbol string) (float64, error) {
-	useTsv, ok := livePxCache[symbol]
+	resp, err := http.Get("https://cloud.iexapis.com/v1/stock/" + symbol + "/previous?token=" + config["iexToken"].(string))
 
-	if !ok {
-		var err error
-
-		useTsv, err = avClient.StockTimeSeries(av.TimeSeriesDaily, symbol)
-
-		if err != nil {
-			return -1, err
-		}
+	if err != nil {
+		return -1, err
 	}
 
-	var changePercent float64 = ((useTsv[len(useTsv)-1].Close / useTsv[len(useTsv)-2].Close) - 1) * 100
+	defer resp.Body.Close()
+
+	data, err := ioutil.ReadAll(resp.Body)
+
+	if err != nil {
+		return -1, err
+	}
+
+	parsed := struct {
+		Close float64 `json:"close"`
+	}{}
+
+	err = json.Unmarshal(data, parsed)
+
+	if err != nil {
+		return -1, err
+	}
+
+	curPx, err := getLivePrice(symbol)
+
+	if err != nil {
+		return -1, err
+	}
+
+	changePercent := (curPx/parsed.Close - 1) * 100
 
 	return changePercent, nil
 }

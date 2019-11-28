@@ -10,12 +10,10 @@ import (
 	"syscall"
 
 	"github.com/bwmarrin/discordgo"
-	av "github.com/cmckee-dev/go-alpha-vantage"
 	"github.com/leekchan/accounting"
 )
 
 var usdFormatter accounting.Accounting
-var avClient *av.Client
 
 var config map[string]interface{}
 
@@ -53,8 +51,6 @@ func main() {
 	registerCommands()
 
 	go autoPurgeLivePxCache()
-
-	avClient = av.NewClient(config["alphaAPIKey"].(string))
 
 	usdFormatter = accounting.Accounting{
 		Symbol:    "$",
