@@ -224,10 +224,26 @@ func registerCommands() {
 			userEquity = 0
 		}
 
+		coImageUrl, err := getLogo(symbol)
+
+		var thumbnail *discordgo.MessageEmbedThumbnail = nil
+
+		if err == nil {
+			thumbnail = &discordgo.MessageEmbedThumbnail{
+				URL: coImageUrl,
+			}
+		}
+
+		company, err := getCompany(symbol)
+
+		if err != nil {
+			return err
+		}
+
 		_, err = s.ChannelMessageSendComplex(m.ChannelID, &discordgo.MessageSend{
 			Content: "",
 			Embed: &discordgo.MessageEmbed{
-				Title: symbol + " Stock",
+				Title: company.Name + " Stock (" + symbol + ")",
 				Fields: []*discordgo.MessageEmbedField{
 					&discordgo.MessageEmbedField{
 						Name:  "Share price",
@@ -237,8 +253,13 @@ func registerCommands() {
 						Name:  m.Author.Username + "'s equity",
 						Value: usdFormatter.FormatMoney(price*float64(userEquity)) + " (" + strconv.Itoa(int(userEquity)) + " shares)",
 					},
+					&discordgo.MessageEmbedField{
+						Name:  "Corporate profile",
+						Value: "Location: " + company.City + ", " + company.State + ", " + company.Country + "\nEmployees: " + strconv.Itoa(company.Employees) + "\n[Website](" + company.Website + ")",
+					},
 				},
-				Color: 0x3E606F,
+				Thumbnail: thumbnail,
+				Color:     0x3E606F,
 			},
 		})
 
@@ -336,6 +357,16 @@ func registerCommands() {
 			return err
 		}
 
+		coImageUrl, err := getLogo(symbol)
+
+		var thumbnail *discordgo.MessageEmbedThumbnail = nil
+
+		if err == nil {
+			thumbnail = &discordgo.MessageEmbedThumbnail{
+				URL: coImageUrl,
+			}
+		}
+
 		_, err = s.ChannelMessageSendComplex(m.ChannelID, &discordgo.MessageSend{
 			Content: "",
 			Embed: &discordgo.MessageEmbed{
@@ -350,7 +381,8 @@ func registerCommands() {
 						Value: usdFormatter.FormatMoney(totalPx),
 					},
 				},
-				Color: 0x46E8B2,
+				Thumbnail: thumbnail,
+				Color:     0x46E8B2,
 			},
 		})
 
@@ -419,6 +451,16 @@ func registerCommands() {
 			return err
 		}
 
+		coImageUrl, err := getLogo(symbol)
+
+		var thumbnail *discordgo.MessageEmbedThumbnail = nil
+
+		if err == nil {
+			thumbnail = &discordgo.MessageEmbedThumbnail{
+				URL: coImageUrl,
+			}
+		}
+
 		_, err = s.ChannelMessageSendComplex(m.ChannelID, &discordgo.MessageSend{
 			Content: "",
 			Embed: &discordgo.MessageEmbed{
@@ -433,7 +475,8 @@ func registerCommands() {
 						Value: usdFormatter.FormatMoney(totalPx),
 					},
 				},
-				Color: 0x46E8B2,
+				Thumbnail: thumbnail,
+				Color:     0x46E8B2,
 			},
 		})
 
