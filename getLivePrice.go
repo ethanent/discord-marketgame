@@ -168,6 +168,8 @@ func getDayChange(symbol string) (float64, error) {
 		}
 
 		prevPx = parsed.Close
+
+		previousCache[symbol] = prevPx
 	}
 
 	curPx, err := getLivePrice(symbol)
