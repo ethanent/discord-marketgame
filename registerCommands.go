@@ -405,6 +405,10 @@ func registerCommands() {
 			}
 
 			u.Shares[symbol] -= uint(count)
+
+			if u.Shares[symbol] <= 0 {
+				delete(u.Shares, symbol)
+			}
 		} else {
 			return errors.New("You do not own any " + symbol + ".")
 		}
