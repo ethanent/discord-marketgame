@@ -162,9 +162,9 @@ func registerCommands() {
 				formattedDI := strconv.FormatFloat(pos.dayIncrease, 'f', 2, 64)
 
 				if pos.dayIncrease < 0 {
-					showTitle += " (" + formattedDI + "% today)"
+					showTitle += " (" + formattedDI + "%)"
 				} else {
-					showTitle += " (+" + formattedDI + "% today)"
+					showTitle += " (+" + formattedDI + "%)"
 				}
 			}
 

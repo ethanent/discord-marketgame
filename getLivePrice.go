@@ -9,6 +9,8 @@ import (
 )
 
 var livePxCache map[string]float64 = map[string]float64{}
+var previousCache map[string]float64 = map[string]float64{}
+var companyCache map[string]*Company = map[string]*Company{}
 
 type Company struct {
 	Name      string `json:"companyName"`
@@ -24,6 +26,22 @@ func autoPurgeLivePxCache() {
 		time.Sleep(time.Minute * 5)
 
 		livePxCache = map[string]float64{}
+	}
+}
+
+func autoPurgePreviousCache() {
+	for {
+		time.Sleep(time.Minute * 5)
+
+		previousCache = map[string]float64{}
+	}
+}
+
+func autoPurgeCompanyCache() {
+	for {
+		time.Sleep(time.Hour * 24)
+
+		companyCache = map[string]*Company{}
 	}
 }
 
@@ -60,6 +78,12 @@ func getLivePrice(symbol string) (float64, error) {
 }
 
 func getCompany(symbol string) (*Company, error) {
+	cachedCompany, ok := companyCache[symbol]
+
+	if ok {
+		return cachedCompany, nil
+	}
+
 	resp, err := http.Get("https://cloud.iexapis.com/v1/stock/" + symbol + "/company?token=" + config["iexSecret"].(string))
 
 	if err != nil {
@@ -77,6 +101,12 @@ func getCompany(symbol string) (*Company, error) {
 	parsed := Company{}
 
 	err = json.Unmarshal(data, &parsed)
+
+	if err != nil {
+		return nil, err
+	}
+
+	companyCache[symbol] = &parsed
 
 	return &parsed, nil
 }
@@ -102,32 +132,42 @@ func getLogo(symbol string) (string, error) {
 
 	err = json.Unmarshal(data, &parsed)
 
+	if err != nil {
+		return "", err
+	}
+
 	return parsed.URL, nil
 }
 
 func getDayChange(symbol string) (float64, error) {
-	resp, err := http.Get("https://cloud.iexapis.com/v1/stock/" + symbol + "/previous?token=" + config["iexSecret"].(string))
+	prevPx, ok := previousCache[symbol]
 
-	if err != nil {
-		return -1, err
-	}
+	if !ok {
+		resp, err := http.Get("https://cloud.iexapis.com/v1/stock/" + symbol + "/previous?token=" + config["iexSecret"].(string))
 
-	defer resp.Body.Close()
+		if err != nil {
+			return -1, err
+		}
 
-	data, err := ioutil.ReadAll(resp.Body)
+		defer resp.Body.Close()
 
-	if err != nil {
-		return -1, err
-	}
+		data, err := ioutil.ReadAll(resp.Body)
 
-	parsed := struct {
-		Close float64 `json:"close"`
-	}{}
+		if err != nil {
+			return -1, err
+		}
 
-	err = json.Unmarshal(data, &parsed)
+		parsed := struct {
+			Close float64 `json:"close"`
+		}{}
 
-	if err != nil {
-		return -1, err
+		err = json.Unmarshal(data, &parsed)
+
+		if err != nil {
+			return -1, err
+		}
+
+		prevPx = parsed.Close
 	}
 
 	curPx, err := getLivePrice(symbol)
@@ -136,7 +176,7 @@ func getDayChange(symbol string) (float64, error) {
 		return -1, err
 	}
 
-	changePercent := (curPx/parsed.Close - 1) * 100
+	changePercent := (curPx/prevPx - 1) * 100
 
 	return changePercent, nil
 }

@@ -51,6 +51,8 @@ func main() {
 	registerCommands()
 
 	go autoPurgeLivePxCache()
+	go autoPurgeCompanyCache()
+	go autoPurgePreviousCache()
 
 	usdFormatter = accounting.Accounting{
 		Symbol:    "$",
