@@ -63,7 +63,7 @@ func registerCommands() {
 		var stocksValue float64 = 0
 
 		for symbol, count := range user.Shares {
-			oneShareValue, err := getLivePrice(symbol)
+			oneShareValue, err := getLivePrice(symbol, false)
 
 			if err != nil {
 				return err
@@ -124,7 +124,7 @@ func registerCommands() {
 		netWorth += user.Balance
 
 		for symbol, count := range user.Shares {
-			sharePx, err := getLivePrice(symbol)
+			sharePx, err := getLivePrice(symbol, false)
 
 			if err != nil {
 				return err
@@ -194,7 +194,7 @@ func registerCommands() {
 
 		symbol := strings.ToUpper(args[0])
 
-		price, err := getLivePrice(symbol)
+		price, err := getLivePrice(symbol, false)
 
 		if err != nil {
 			return err
@@ -323,7 +323,7 @@ func registerCommands() {
 			return errors.New("You must buy at least one share.")
 		}
 
-		sharePx, err := getLivePrice(symbol)
+		sharePx, err := getLivePrice(symbol, true)
 
 		if err != nil {
 			return err
@@ -357,13 +357,13 @@ func registerCommands() {
 			return err
 		}
 
-		coImageUrl, err := getLogo(symbol)
+		coImageURL, err := getLogo(symbol)
 
 		var thumbnail *discordgo.MessageEmbedThumbnail = nil
 
 		if err == nil {
 			thumbnail = &discordgo.MessageEmbedThumbnail{
-				URL: coImageUrl,
+				URL: coImageURL,
 			}
 		}
 
@@ -413,7 +413,7 @@ func registerCommands() {
 			return errors.New("You must sell at least one share.")
 		}
 
-		sharePx, err := getLivePrice(symbol)
+		sharePx, err := getLivePrice(symbol, true)
 
 		if err != nil {
 			return err
