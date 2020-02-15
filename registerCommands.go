@@ -37,7 +37,7 @@ func registerCommands() {
 					},
 					&discordgo.MessageEmbedField{
 						Name:   "Activity Commands",
-						Value:  "\n!buy <ticker> <count>\n!reset",
+						Value:  "\n!buy <symbol> <count>\n!sell <symbol> <count>\n!stop <symbol> <price> <count>\n!cancel <symbol>\n!reset",
 						Inline: true,
 					},
 				},
@@ -281,7 +281,7 @@ func registerCommands() {
 
 		fmt.Println("Resetting user " + u.ID)
 
-		u.Shares = map[string]uint{}
+		u.Shares = map[string]int{}
 		u.Balance = config["game"].(map[string]interface{})["startBalance"].(float64)
 		u.LastReset = time.Now()
 
@@ -305,11 +305,11 @@ func registerCommands() {
 
 	registerCommand("buy", func(s *discordgo.Session, m *discordgo.Message, args []string) error {
 		if len(args) < 2 {
-			return errors.New("Missing arguments.\nUsage: !buy <count> <symbol>")
+			return errors.New("Missing arguments.\nUsage: !buy <symbol> <count>")
 		}
 
-		count, err := strconv.Atoi(args[0])
-		symbol := strings.ToUpper(args[1])
+		count, err := strconv.Atoi(args[1])
+		symbol := strings.ToUpper(args[0])
 
 		if err != nil {
 			return err
@@ -346,9 +346,9 @@ func registerCommands() {
 		_, ok := u.Shares[symbol]
 
 		if ok {
-			u.Shares[symbol] += uint(count)
+			u.Shares[symbol] += count
 		} else {
-			u.Shares[symbol] = uint(count)
+			u.Shares[symbol] = count
 		}
 
 		err = u.Save()
@@ -393,13 +393,154 @@ func registerCommands() {
 		return nil
 	})
 
-	registerCommand("sell", func(s *discordgo.Session, m *discordgo.Message, args []string) error {
-		if len(args) < 2 {
-			return errors.New("Missing arguments.\nUsage: !sell <count> <symbol>")
+	registerCommand("cancel", func(s *discordgo.Session, m *discordgo.Message, args []string) error {
+		if len(args) < 1 {
+			return errors.New("Missing arguments.\nUsage: !cancel <symbol>")
 		}
 
-		count, err := strconv.Atoi(args[0])
-		symbol := strings.ToUpper(args[1])
+		symbol := strings.ToUpper(args[0])
+
+		// Get user
+
+		u, err := GetUser(m.Author.ID)
+
+		if err != nil {
+			return err
+		}
+
+		// Check that stop order exists
+
+		_, ok := u.Stops[symbol]
+
+		if !ok {
+			return errors.New("The stop order does not exist.")
+		}
+
+		// Cancel the order
+
+		delete(u.Stops, symbol)
+
+		// Save
+
+		err = u.Save()
+
+		if err != nil {
+			return err
+		}
+
+		s.ChannelMessageSendComplex(m.ChannelID, &discordgo.MessageSend{
+			Content: "",
+			Embed: &discordgo.MessageEmbed{
+				Title: ":ballot_box_with_check: " + symbol + " Stop Order Cancelled",
+				Fields: []*discordgo.MessageEmbedField{
+					&discordgo.MessageEmbedField{
+						Name:  "Information",
+						Value: "Your stop order has been cancelled and the lock on the symbol has been lifted.",
+					},
+				},
+				Color: 0x46E8B2,
+			},
+		})
+
+		return nil
+	})
+
+	registerCommand("stop", func(s *discordgo.Session, m *discordgo.Message, args []string) error {
+		if len(args) < 3 {
+			return errors.New("Missing arguments.\nUsage: !stop <symbol> <price> <count>")
+		}
+
+		// Parse args
+
+		count, err := strconv.Atoi(args[2])
+
+		if err != nil {
+			return err
+		}
+
+		price, err := strconv.ParseFloat(args[1], 64)
+
+		if err != nil {
+			return err
+		}
+
+		symbol := strings.ToUpper(args[0])
+
+		// Get user
+
+		u, err := GetUser(m.Author.ID)
+
+		if err != nil {
+			return err
+		}
+
+		// Ensure there is not currently a stop order
+
+		_, ok := u.Stops[symbol]
+
+		if ok == true {
+			return errors.New("You have a pending stop order for " + symbol + " which blocks this stop placement. You may cancel the current order using the command \"!cancel " + symbol + "\"")
+		}
+
+		// Ensure user has enough shares to sell
+
+		if u.Shares[symbol] < count {
+			return errors.New("You do not own enough " + symbol + " to create this stop order.")
+		}
+
+		// Ensure stop price is below current market price (this stops exploits using IVT!)
+
+		curPx, err := getLivePrice(symbol, true)
+
+		if err != nil {
+			return err
+		}
+
+		if price > curPx {
+			return errors.New("The price specified (" + usdFormatter.FormatMoney(price) + ") is above market price for " + symbol + ".")
+		}
+
+		// Place stop order
+
+		u.Stops[symbol] = StopOrder{
+			Price: price,
+			Count: count,
+		}
+
+		err = u.Save()
+
+		if err != nil {
+			return err
+		}
+
+		s.ChannelMessageSendComplex(m.ChannelID, &discordgo.MessageSend{
+			Content: "",
+			Embed: &discordgo.MessageEmbed{
+				Title: ":ballot_box_with_check: " + strconv.Itoa(count) + " x " + symbol + " Stop Order Placed",
+				Fields: []*discordgo.MessageEmbedField{
+					&discordgo.MessageEmbedField{
+						Name:  "Stop price",
+						Value: usdFormatter.FormatMoney(price),
+					},
+					&discordgo.MessageEmbedField{
+						Name:  "Quantity",
+						Value: strconv.Itoa(count),
+					},
+				},
+				Color: 0x46E8B2,
+			},
+		})
+
+		return nil
+	})
+
+	registerCommand("sell", func(s *discordgo.Session, m *discordgo.Message, args []string) error {
+		if len(args) < 2 {
+			return errors.New("Missing arguments.\nUsage: !sell <symbol> <count>")
+		}
+
+		count, err := strconv.Atoi(args[1])
+		symbol := strings.ToUpper(args[0])
 
 		if err != nil {
 			return err
@@ -425,18 +566,24 @@ func registerCommands() {
 			return err
 		}
 
+		_, ok := u.Stops[symbol]
+
+		if ok == true {
+			return errors.New("You have a pending stop order for " + symbol + " which blocks this sale.")
+		}
+
 		totalPx := float64(count) * sharePx
 
 		u.Balance += totalPx
 
-		_, ok := u.Shares[symbol]
+		_, ok = u.Shares[symbol]
 
 		if ok {
-			if u.Shares[symbol] < uint(count) {
-				return errors.New("You do not own enough $" + symbol + " to complete sale. You currently own " + strconv.Itoa(int(u.Shares[symbol])) + " " + symbol + ".")
+			if u.Shares[symbol] < count {
+				return errors.New("You do not own enough " + symbol + " to complete sale. You currently own " + strconv.Itoa(int(u.Shares[symbol])) + " " + symbol + ".")
 			}
 
-			u.Shares[symbol] -= uint(count)
+			u.Shares[symbol] -= count
 
 			if u.Shares[symbol] <= 0 {
 				delete(u.Shares, symbol)

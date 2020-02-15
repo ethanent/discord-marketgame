@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -9,13 +10,20 @@ import (
 	"time"
 )
 
+// StopOrder data
+type StopOrder struct {
+	Count int     `json:"count"`
+	Price float64 `json:"price"`
+}
+
 // User data
 type User struct {
 	mux       sync.Mutex
-	ID        string          `json:"id"`
-	Balance   float64         `json:"balance"`
-	Shares    map[string]uint `json:"shares"`
-	LastReset time.Time       `json:"lastReset"`
+	ID        string               `json:"id"`
+	Balance   float64              `json:"balance"`
+	Shares    map[string]int       `json:"shares"`
+	LastReset time.Time            `json:"lastReset"`
+	Stops     map[string]StopOrder `json:"stops"`
 }
 
 var memUsers map[string]*User = map[string]*User{}
@@ -55,8 +63,9 @@ func GetUser(id string) (*User, error) {
 			ID:        id,
 			mux:       sync.Mutex{},
 			Balance:   config["game"].(map[string]interface{})["startBalance"].(float64),
-			Shares:    map[string]uint{},
+			Shares:    map[string]int{},
 			LastReset: time.Now(),
+			Stops:     map[string]StopOrder{},
 		}
 
 		err := user.Save()
@@ -81,6 +90,20 @@ func GetUser(id string) (*User, error) {
 	}
 
 	err = json.Unmarshal(userFileContent, &user)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Ensure user has Stops map
+
+	if user.Stops == nil {
+		user.Stops = map[string]StopOrder{}
+	}
+
+	// Update user
+
+	err = UpdateUser(&user)
 
 	if err != nil {
 		return nil, err
@@ -111,6 +134,39 @@ func (u *User) Save() error {
 	}
 
 	_, err = file.Write(marshalled)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// UpdateUser completes all pending transactions for u
+func UpdateUser(u *User) error {
+	// Fulfill stop orders
+
+	for symbol, stop := range u.Stops {
+		stopSymbolPx, err := getLivePrice(symbol, false)
+
+		if err != nil {
+			return err
+		}
+
+		if stopSymbolPx < stop.Price {
+			// Price has fallen below stop price
+			// Execute stop at saved price due to IVT
+
+			fmt.Println("Executing stop order", symbol, stop.Count, "at price", stop.Price)
+
+			u.Balance += stop.Price
+			u.Shares[symbol] -= stop.Count
+
+			delete(u.Stops, symbol)
+		}
+	}
+
+	err := u.Save()
 
 	if err != nil {
 		return err
