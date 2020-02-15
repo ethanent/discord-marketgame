@@ -14,6 +14,7 @@ var livePxCache map[string]float64 = map[string]float64{}
 var previousCache map[string]float64 = map[string]float64{}
 var companyCache map[string]*Company = map[string]*Company{}
 
+// Company is a company
 type Company struct {
 	Name      string `json:"companyName"`
 	Website   string `json:"website"`

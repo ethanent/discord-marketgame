@@ -30,6 +30,7 @@ func getUserFilePath(id string) (*string, error) {
 	return &userFilePath, nil
 }
 
+// GetUser reads a User from its ID
 func GetUser(id string) (*User, error) {
 	memUser, ok := memUsers[id]
 

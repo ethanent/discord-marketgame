@@ -224,13 +224,13 @@ func registerCommands() {
 			userEquity = 0
 		}
 
-		coImageUrl, err := getLogo(symbol)
+		coImageURL, err := getLogo(symbol)
 
 		var thumbnail *discordgo.MessageEmbedThumbnail = nil
 
 		if err == nil {
 			thumbnail = &discordgo.MessageEmbedThumbnail{
-				URL: coImageUrl,
+				URL: coImageURL,
 			}
 		}
 
@@ -451,13 +451,13 @@ func registerCommands() {
 			return err
 		}
 
-		coImageUrl, err := getLogo(symbol)
+		coImageURL, err := getLogo(symbol)
 
 		var thumbnail *discordgo.MessageEmbedThumbnail = nil
 
 		if err == nil {
 			thumbnail = &discordgo.MessageEmbedThumbnail{
-				URL: coImageUrl,
+				URL: coImageURL,
 			}
 		}
 
