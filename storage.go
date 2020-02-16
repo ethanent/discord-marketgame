@@ -159,7 +159,7 @@ func UpdateUser(u *User) error {
 
 			fmt.Println("Executing stop order", symbol, stop.Count, "at price", stop.Price)
 
-			u.Balance += stop.Price
+			u.Balance += stop.Price * float64(stop.Count)
 			u.Shares[symbol] -= stop.Count
 
 			// Drop from Shares if count is 0
