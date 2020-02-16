@@ -162,6 +162,12 @@ func UpdateUser(u *User) error {
 			u.Balance += stop.Price
 			u.Shares[symbol] -= stop.Count
 
+			// Drop from Shares if count is 0
+
+			if u.Shares[symbol] == 0 {
+				delete(u.Shares, symbol)
+			}
+
 			delete(u.Stops, symbol)
 		}
 	}
