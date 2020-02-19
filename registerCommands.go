@@ -634,4 +634,9 @@ func registerCommands() {
 		return nil
 	})
 
+	registerAlternate("lb", "top")
+	registerAlternate("leaders", "top")
+	registerAlternate("leaderboard", "top")
+	registerAlternate("leaderboards", "top")
+	registerCommand("top", cmdTop)
 }

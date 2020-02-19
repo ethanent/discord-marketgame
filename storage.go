@@ -38,6 +38,36 @@ func getUserFilePath(id string) (*string, error) {
 	return &userFilePath, nil
 }
 
+// ListUsers returns a list of user IDs
+func ListUsers() ([]string, error) {
+	usersDir, err := filepath.Abs("users")
+
+	if err != nil {
+		return nil, err
+	}
+
+	d, err := os.Open(usersDir)
+
+	if err != nil {
+		return nil, err
+	}
+
+	files, err := d.Readdir(-1)
+
+	if err != nil {
+		return nil, err
+	}
+
+	ids := []string{}
+
+	for _, f := range files {
+		fname := []rune(f.Name())
+		ids = append(ids, string(fname[0:len(fname)-5]))
+	}
+
+	return ids, nil
+}
+
 // GetUser reads a User from its ID
 func GetUser(id string) (*User, error) {
 	memUser, ok := memUsers[id]
@@ -140,6 +170,23 @@ func (u *User) Save() error {
 	}
 
 	return nil
+}
+
+// NetWorth returns User u's net worth
+func (u *User) NetWorth(bypassCache bool) (float64, error) {
+	nw := u.Balance
+
+	for symbol, count := range u.Shares {
+		px, err := getLivePrice(symbol, bypassCache)
+
+		if err != nil {
+			return 0, err
+		}
+
+		nw += px * float64(count)
+	}
+
+	return nw, nil
 }
 
 // UpdateUser completes all pending transactions for u
