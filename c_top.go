@@ -50,6 +50,8 @@ func cmdTop(s *discordgo.Session, m *discordgo.Message, args []string) error {
 	}
 
 	for _, userID := range userIDs {
+		// Here one could add a check for whether or not the user is a member of the current server
+
 		u, err := GetUser(userID)
 
 		if err != nil {
@@ -59,7 +61,13 @@ func cmdTop(s *discordgo.Session, m *discordgo.Message, args []string) error {
 		lb.users = append(lb.users, u)
 	}
 
+	// Sort and cap users
+
 	sort.Sort(&lb)
+
+	if len(lb.users) > 5 {
+		lb.users = lb.users[:5]
+	}
 
 	// Build message to send
 
