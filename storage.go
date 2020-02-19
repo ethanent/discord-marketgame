@@ -18,12 +18,13 @@ type StopOrder struct {
 
 // User data
 type User struct {
-	mux       sync.Mutex
-	ID        string               `json:"id"`
-	Balance   float64              `json:"balance"`
-	Shares    map[string]int       `json:"shares"`
-	LastReset time.Time            `json:"lastReset"`
-	Stops     map[string]StopOrder `json:"stops"`
+	mux           sync.Mutex
+	ID            string               `json:"id"`
+	Balance       float64              `json:"balance"`
+	Shares        map[string]int       `json:"shares"`
+	LastReset     time.Time            `json:"lastReset"`
+	Stops         map[string]StopOrder `json:"stops"`
+	SeasonStartNW float64              `json:"seasonStartNetWorth"`
 }
 
 var memUsers map[string]*User = map[string]*User{}
@@ -89,6 +90,8 @@ func GetUser(id string) (*User, error) {
 	defer userFile.Close()
 
 	if err != nil {
+		// Create user if not existent
+
 		user = User{
 			ID:        id,
 			mux:       sync.Mutex{},
@@ -97,6 +100,8 @@ func GetUser(id string) (*User, error) {
 			LastReset: time.Now(),
 			Stops:     map[string]StopOrder{},
 		}
+
+		user.SeasonStartNW = user.Balance
 
 		err := user.Save()
 

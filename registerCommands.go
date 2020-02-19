@@ -41,4 +41,6 @@ func registerCommands() {
 	registerAlternate("leaderboard", "top")
 	registerAlternate("leaderboards", "top")
 	registerCommand("top", cmdTop)
+
+	registerCommand("newseason", cmdNewSeason)
 }
