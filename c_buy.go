@@ -17,7 +17,7 @@ func cmdBuy(s *discordgo.Session, m *discordgo.Message, args []string) error {
 	symbol := strings.ToUpper(args[0])
 
 	if err != nil {
-		return err
+		return errors.New("Non-numeric value for count.\nUsage: !buy <symbol> <count>")
 	}
 
 	if count < 0 {
