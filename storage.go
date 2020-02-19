@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -192,6 +193,21 @@ func (u *User) NetWorth(bypassCache bool) (float64, error) {
 	}
 
 	return nw, nil
+}
+
+// SeasonDelta returns User u's season growth (as a proportion)
+func (u *User) SeasonDelta(bypassCache bool) (float64, error) {
+	nw, err := u.NetWorth(bypassCache)
+
+	if err != nil {
+		return 0, err
+	}
+
+	if u.SeasonStartNW == 0 {
+		return 0, errors.New("User has no season start net worth.")
+	}
+
+	return nw/u.SeasonStartNW - 1, nil
 }
 
 // UpdateUser completes all pending transactions for u
