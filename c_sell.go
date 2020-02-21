@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -39,6 +40,22 @@ func cmdSell(s *discordgo.Session, m *discordgo.Message, args []string) error {
 	if err != nil {
 		return err
 	}
+
+	// Ensure market is open if not crypto
+
+	if !isCrypto(symbol) {
+		t, err := getLastUpdated(symbol)
+
+		if err != nil {
+			return err
+		}
+
+		if time.Since(*t).Minutes() > 8 {
+			return errors.New("The market has closed and the trade cannot be completed.")
+		}
+	}
+
+	// Ensure no active stops prevent sale
 
 	_, ok := u.Stops[symbol]
 

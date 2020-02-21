@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -28,6 +29,22 @@ func cmdBuy(s *discordgo.Session, m *discordgo.Message, args []string) error {
 		return errors.New("You must buy at least one share.")
 	}
 
+	// Ensure market is open if not crypto
+
+	if !isCrypto(symbol) {
+		t, err := getLastUpdated(symbol)
+
+		if err != nil {
+			return err
+		}
+
+		if time.Since(*t).Minutes() > 8 {
+			return errors.New("The market has closed and the trade cannot be completed.")
+		}
+	}
+
+	// Get info
+
 	sharePx, err := getLivePrice(symbol, true)
 
 	if err != nil {
@@ -39,6 +56,8 @@ func cmdBuy(s *discordgo.Session, m *discordgo.Message, args []string) error {
 	if err != nil {
 		return err
 	}
+
+	// Ensure affordable for user
 
 	totalPx := float64(count) * sharePx
 

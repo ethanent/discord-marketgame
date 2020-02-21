@@ -52,6 +52,30 @@ func isCrypto(symbol string) bool {
 	return strings.HasPrefix(symbol, "C:")
 }
 
+func getLastUpdated(symbol string) (*time.Time, error) {
+	resp, err := http.Get("https://cloud.iexapis.com/v1/stock/" + strings.ToLower(symbol) + "/quote/latestUpdate?token=" + config["iexSecret"].(string))
+
+	if err != nil {
+		return nil, err
+	}
+
+	rd, err := ioutil.ReadAll(resp.Body)
+
+	if err != nil {
+		return nil, err
+	}
+
+	prd, err := strconv.Atoi(string(rd))
+
+	if err != nil {
+		return nil, err
+	}
+
+	lastUpdate := time.Unix(0, int64(time.Millisecond)*int64(prd))
+
+	return &lastUpdate, nil
+}
+
 func getLivePrice(symbol string, bypassCache bool) (float64, error) {
 	if bypassCache == false {
 		cachedLast, ok := livePxCache[symbol]
