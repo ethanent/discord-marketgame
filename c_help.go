@@ -14,7 +14,7 @@ func cmdHelp(s *discordgo.Session, m *discordgo.Message, args []string) error {
 			Fields: []*discordgo.MessageEmbedField{
 				&discordgo.MessageEmbedField{
 					Name:   "Information Commands",
-					Value:  "\n!help\n!price <ticker>\n!bal\n!list\n!top [net | delta]\n!primary <state name | national>",
+					Value:  "\n!help\n!price <ticker>\n!bal\n!list\n!top [net | delta]",
 					Inline: true,
 				},
 				&discordgo.MessageEmbedField{
