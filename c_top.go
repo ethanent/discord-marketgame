@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"math"
 	"sort"
 	"strconv"
 
@@ -114,6 +115,21 @@ func cmdTop(s *discordgo.Session, m *discordgo.Message, args []string) error {
 			return err
 		}
 
+		if useSortMode == Delta {
+			// If in Delta sort...
+
+			sd, err := u.SeasonDelta(false)
+
+			if err != nil {
+				return err
+			}
+
+			if math.Abs(sd) < 0.003 {
+				// If user value has not changed significantly, do not include the user.
+				continue
+			}
+		}
+
 		lb.users = append(lb.users, u)
 	}
 
@@ -121,8 +137,8 @@ func cmdTop(s *discordgo.Session, m *discordgo.Message, args []string) error {
 
 	sort.Sort(&lb)
 
-	if len(lb.users) > 5 {
-		lb.users = lb.users[:5]
+	if len(lb.users) > 10 {
+		lb.users = lb.users[:10]
 	}
 
 	// Build message to send
