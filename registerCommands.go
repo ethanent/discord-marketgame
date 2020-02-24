@@ -43,6 +43,4 @@ func registerCommands() {
 	registerCommand("top", cmdTop)
 
 	registerCommand("newseason", cmdNewSeason)
-
-	registerCommand("primary", cmdPrimary)
 }
