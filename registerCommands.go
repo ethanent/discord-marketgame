@@ -20,6 +20,7 @@ func registerCommands() {
 	registerAlternate("stocks", "list")
 	registerAlternate("shares", "list")
 	registerAlternate("ls", "list")
+	registerAlternate("dir", "list")
 	registerAlternate("positions", "list")
 	registerCommand("list", cmdList)
 
@@ -43,4 +44,7 @@ func registerCommands() {
 	registerCommand("top", cmdTop)
 
 	registerCommand("newseason", cmdNewSeason)
+	
+	registerAlternate("pan", "panic")
+	registerCommand("panic", cmdPanic)
 }
