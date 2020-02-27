@@ -12,9 +12,11 @@ func cmdPanic(s *discordgo.Session, m *discordgo.Message, args []string) error {
 	if len(args) < 1 {
 		return errors.New("Too few arguments.\nUsage: !panic <symbol>")
 	}
+	
 	symbol := strings.ToUpper(args[0])
 	
 	u, e := GetUser(m.Author.ID)
+	
 	if e != nil {
 		return e
 	}
@@ -22,7 +24,7 @@ func cmdPanic(s *discordgo.Session, m *discordgo.Message, args []string) error {
 	shares, ok := u.Shares[symbol]
 	
 	if !ok {
-		return errors.New("You don't own any shares of "+symbol+".")
+		return errors.New("You don't own any " + symbol + ".")
 	}
 
 	return cmdSell(s, m, []string{symbol, strconv.Itoa(shares)})
