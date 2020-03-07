@@ -13,15 +13,15 @@ func cmdPanic(s *discordgo.Session, m *discordgo.Message, args []string) error {
 		return errors.New("Too few arguments.\nUsage: !panic <symbol | *>")
 	}
 	
-	u, e := GetUser(m.Author.ID)
-	if e != nil {
-		return e
+	u, err := GetUser(m.Author.ID)
+	if err != nil {
+		return err
 	}
 	
 	if args[0] == "*" || args[0] == "." {
 		for symbol := range u.Shares {
-			e = cmdPanic(s, m, []string{symbol});
-			if e != nil {
+			err = cmdPanic(s, m, []string{symbol});
+			if err != nil {
 				displayError(s, m, e)
 			}
 		}
@@ -31,7 +31,6 @@ func cmdPanic(s *discordgo.Session, m *discordgo.Message, args []string) error {
 		symbol := strings.ToUpper(args[0])
 				
 		shares, ok := u.Shares[symbol]
-		
 		if !ok {
 			return errors.New("You don't own any " + symbol + ".")
 		}
