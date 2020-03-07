@@ -19,7 +19,7 @@ func cmdHelp(s *discordgo.Session, m *discordgo.Message, args []string) error {
 				},
 				&discordgo.MessageEmbedField{
 					Name:   "Activity Commands",
-					Value:  "\n!buy <symbol> <count>\n!sell <symbol> <count>\n!panic <symbol>\n!stop <symbol> <price> <count>\n!cancel <symbol>\n!reset",
+					Value:  "\n!buy <symbol> <count>\n!sell <symbol> <count>\n!panic <symbol>\n!panicall\n!stop <symbol> <price> <count>\n!cancel <symbol>\n!reset",
 					Inline: true,
 				},
 			},

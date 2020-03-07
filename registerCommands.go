@@ -47,4 +47,6 @@ func registerCommands() {
 	
 	registerAlternate("pan", "panic")
 	registerCommand("panic", cmdPanic)
+	
+	registerCommand("panicall", cmdPanicAll)
 }
