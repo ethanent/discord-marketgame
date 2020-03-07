@@ -49,7 +49,7 @@ func handleMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
 				_, err = s.ChannelMessageSendComplex(msg.ChannelID, &discordgo.MessageSend{
 					Content: "",
 					Embed: &discordgo.MessageEmbed{
-						Title:       "ERROR",
+						Title:       ":x: Error",
 						Description: err.Error(),
 						Color:       0xFF0000,
 					},
