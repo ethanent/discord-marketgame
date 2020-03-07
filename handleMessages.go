@@ -44,17 +44,21 @@ func handleMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
 			err := handler(s, &msg, args[1:])
 
 			if err != nil {
-				os.Stderr.WriteString(err.Error())
-
-				_, err = s.ChannelMessageSendComplex(msg.ChannelID, &discordgo.MessageSend{
-					Content: "",
-					Embed: &discordgo.MessageEmbed{
-						Title:       "ERROR",
-						Description: err.Error(),
-						Color:       0xFF0000,
-					},
-				})
+				displayError(s, &msg, err)
 			}
 		}
 	}
+}
+
+func displayError(s *discordgo.Session, m *discordgo.Message, err error) {
+	os.Stderr.WriteString(err.Error())
+
+	_, err = s.ChannelMessageSendComplex(m.ChannelID, &discordgo.MessageSend{
+		Content: "",
+		Embed: &discordgo.MessageEmbed{
+			Title:       "ERROR",
+			Description: err.Error(),
+			Color:       0xFF0000,
+		},
+	})
 }

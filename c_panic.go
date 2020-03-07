@@ -22,7 +22,7 @@ func cmdPanic(s *discordgo.Session, m *discordgo.Message, args []string) error {
 		for symbol := range u.Shares {
 			e = cmdPanic(s, m, []string{symbol});
 			if e != nil {
-				return e
+				displayError(s, m, e)
 			}
 		}
 		
