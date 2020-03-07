@@ -25,6 +25,7 @@ func cmdReset(s *discordgo.Session, m *discordgo.Message, args []string) error {
 
 	u.Shares = map[string]int{}
 	u.Balance = config["game"].(map[string]interface{})["startBalance"].(float64)
+	u.SeasonStartNW = u.Balance
 	u.LastReset = time.Now()
 
 	u.Save()
