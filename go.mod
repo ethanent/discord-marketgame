@@ -1,4 +1,4 @@
-module dcmarket
+module github.com/ethanent/discord-marketgame
 
 go 1.13
 
