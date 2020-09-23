@@ -1,16 +1,43 @@
 package main
 
 import (
+	"errors"
 	"strconv"
+	"strings"
 
 	"github.com/bwmarrin/discordgo"
 )
 
 func cmdList(s *discordgo.Session, m *discordgo.Message, args []string) error {
-	user, err := GetUser(m.Author.ID)
+	// User for balance
+	var user *User
+	var username string
+	// Walrus operator won't work properly, so need to declare error ahead of time
+	var err error
+	if len(args) > 0 {
+		member, err := searchGuild(s, strings.Join(args, " "), m.GuildID)
+		if err != nil {
+			return err
+		}
 
-	if err != nil {
-		return err
+		if member.User.Bot {
+			return errors.New("Specified user is a bot")
+		}
+
+		user, err = GetUser(member.User.ID)
+		if err != nil {
+			return err
+		}
+
+		username = member.User.Username
+	} else {
+		// Get current user's balance
+		user, err = GetUser(m.Author.ID)
+		if err != nil {
+			return err
+		}
+
+		username = m.Author.Username
 	}
 
 	positions := []positionData{}
@@ -51,7 +78,7 @@ func cmdList(s *discordgo.Session, m *discordgo.Message, args []string) error {
 	}
 
 	embed := discordgo.MessageEmbed{
-		Title:  m.Author.Username + "'s Positions",
+		Title:  username + "'s Positions",
 		Fields: []*discordgo.MessageEmbedField{},
 	}
 
