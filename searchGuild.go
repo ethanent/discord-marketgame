@@ -6,13 +6,15 @@ import (
 	"regexp"
 )
 
-func searchGuild(s *discordgo.Session, query string, guildID string) (*discordgo.Member, error) {
+func searchGuild(s *discordgo.Session, m *discordgo.Message, query string) (*discordgo.Member, error) {
 	// Check if argument is a ping
-	if len(query) > 3 && query[0:3] == "<@!" && query[len(query)-1:] == ">" {
-		member, err := s.GuildMember(guildID, query[3:len(query)-1])
+	if len(m.Mentions) == 1 {
+		member, err := s.GuildMember(m.GuildID, m.Mentions[0].ID)
 		if err == nil {
 			return member, nil
 		}
+	} else if len(m.Mentions) > 1 {
+		return nil, errors.New("Multiple pings in error")
 	}
 
 	// Search for user in guild
@@ -46,5 +48,5 @@ func searchGuild(s *discordgo.Session, query string, guildID string) (*discordgo
 		return nil, errors.New("Couldn't find a unique user")
 	}
 
-	return s.GuildMember(guildID, bestFit)
+	return s.GuildMember(m.GuildID, bestFit)
 }
