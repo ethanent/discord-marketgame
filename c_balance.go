@@ -13,7 +13,7 @@ func cmdBalance(s *discordgo.Session, m *discordgo.Message, args []string) error
 	// Walrus operator won't work properly, so need to declare error ahead of time
 	var err error
 	if len(args) > 0 {
-		member, err := searchGuild(s, strings.Join(args, " "), m.GuildID)
+		member, err := searchGuild(s, m, strings.Join(args, " "))
 		if err != nil {
 			return err
 		}
